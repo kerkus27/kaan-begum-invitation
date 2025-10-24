@@ -50,7 +50,8 @@
         }
         
         .floral-illustration {
-            width: 280px;
+            width: 100%;
+            max-width: 600px;
             height: auto;
             margin: 0 auto 40px;
             display: block;
@@ -559,43 +560,12 @@
 <body>
     <!-- Hero Section -->
     <section class="hero">
-        <svg class="floral-illustration" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
-            <g opacity="0.7">
-                <!-- Watercolor flowers illustration -->
-                <ellipse cx="200" cy="90" rx="80" ry="40" fill="#E8D5C4" opacity="0.3"/>
-                <ellipse cx="150" cy="100" rx="50" ry="30" fill="#C9B5A0" opacity="0.25"/>
-                <ellipse cx="250" cy="100" rx="50" ry="30" fill="#C9B5A0" opacity="0.25"/>
-                
-                <!-- Leaves -->
-                <path d="M120,100 Q100,80 90,100 Q100,95 120,100" fill="#9FB09E" opacity="0.4"/>
-                <path d="M280,100 Q300,80 310,100 Q300,95 280,100" fill="#9FB09E" opacity="0.4"/>
-                <path d="M140,120 Q130,100 120,120 Q130,115 140,120" fill="#8FA68E" opacity="0.4"/>
-                <path d="M260,120 Q270,100 280,120 Q270,115 260,120" fill="#8FA68E" opacity="0.4"/>
-                
-                <!-- Main flowers -->
-                <circle cx="200" cy="85" r="15" fill="#E8C5B5" opacity="0.5"/>
-                <circle cx="195" cy="80" r="8" fill="#D4AFA0" opacity="0.6"/>
-                <circle cx="205" cy="80" r="8" fill="#D4AFA0" opacity="0.6"/>
-                <circle cx="200" cy="75" r="10" fill="#F5E6DC" opacity="0.7"/>
-                
-                <!-- Side flowers -->
-                <circle cx="160" cy="95" r="12" fill="#E8C5B5" opacity="0.4"/>
-                <circle cx="165" cy="90" r="7" fill="#F5E6DC" opacity="0.5"/>
-                <circle cx="240" cy="95" r="12" fill="#E8C5B5" opacity="0.4"/>
-                <circle cx="235" cy="90" r="7" fill="#F5E6DC" opacity="0.5"/>
-                
-                <!-- Small accent flowers -->
-                <circle cx="130" cy="110" r="6" fill="#D4AFA0" opacity="0.3"/>
-                <circle cx="270" cy="110" r="6" fill="#D4AFA0" opacity="0.3"/>
-                <circle cx="180" cy="70" r="5" fill="#E8D5C4" opacity="0.3"/>
-                <circle cx="220" cy="70" r="5" fill="#E8D5C4" opacity="0.3"/>
-            </g>
-        </svg>
+        <img src="floral-header.png" alt="Floral decoration" class="floral-illustration" />
         
         <div class="names">
-            <span class="name">KAAN ERKUŞ</span>
+            <span class="name">BEGÜM</span>
             <span class="ampersand">&</span>
-            <span class="name">BEGÜM ÖZGELEN</span>
+            <span class="name">KAAN</span>
         </div>
         
         <div class="countdown" id="countdown">
@@ -894,9 +864,7 @@
                 to_email: RECIPIENT_EMAIL
             };
             
-            // TODO: EmailJS Integration
-            // Uncomment and configure when you have EmailJS credentials
-            /*
+            // EmailJS Integration - Active
             try {
                 // Initialize EmailJS
                 emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -908,35 +876,35 @@
                     {
                         to_email: RECIPIENT_EMAIL,
                         from_name: fullName,
-                        subject: `LCV – Kaan & Begüm – ${fullName}`,
+                        reply_to: fullName,
+                        full_name: fullName,
+                        attendance_status: attendance,
+                        guest_count: emailData.guestCount,
+                        notes: emailData.notes,
                         message: `
-                            Ad Soyad: ${fullName}
-                            Katılım Durumu: ${attendance}
-                            Kişi Sayısı: ${emailData.guestCount}
-                            Notlar: ${emailData.notes}
-                        `
+Ad Soyad: ${fullName}
+Katılım Durumu: ${attendance}
+Kişi Sayısı: ${emailData.guestCount}
+Notlar: ${emailData.notes}
+                        `.trim()
                     }
                 );
                 
                 console.log('Email sent successfully:', response);
                 showSuccessModal();
                 document.getElementById('lcvForm').reset();
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'İleri →';
             } catch (error) {
                 console.error('Email sending failed:', error);
-                alert('Bir hata oluştu. Lütfen tekrar deneyiniz.');
+                alert('Bir hata oluştu. Lütfen tekrar deneyiniz veya doğrudan bizimle iletişime geçin.');
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'İleri →';
             }
-            */
-            
-            // For demo purposes (remove this when EmailJS is configured)
-            console.log('Form data:', emailData);
-            setTimeout(() => {
-                showSuccessModal();
-                document.getElementById('lcvForm').reset();
-            }, 1000);
-            
-            // Re-enable submit button
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'İleri →';
         });
         
         function showSuccessModal() {
@@ -955,7 +923,7 @@
         });
     </script>
     
-    <!-- EmailJS SDK (Uncomment when ready to use) -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script> -->
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </body>
 </html>
