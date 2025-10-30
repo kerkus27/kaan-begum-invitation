@@ -745,13 +745,6 @@
     </footer>
     
     <script>
-        // TODO: Replace with your EmailJS credentials
-        // Sign up at https://www.emailjs.com/ and get your credentials
-        const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID'; // TODO: Add your EmailJS service ID
-        const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // TODO: Add your EmailJS template ID
-        const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; // TODO: Add your EmailJS public key
-        const RECIPIENT_EMAIL = 'erkuskaan@gmail.com';
-        
         // Countdown Timer
         function updateCountdown() {
             const weddingDate = new Date('2026-05-16T19:00:00+03:00').getTime();
@@ -861,52 +854,35 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Gönderiliyor...';
             
-            // Prepare email data
-            const emailData = {
-                fullName: fullName,
-                attendance: attendance,
-                guestCount: attendance === 'Geleceğim' ? guestCount : 'N/A',
-                notes: notes || 'Yok',
-                to_email: RECIPIENT_EMAIL
-            };
-            
-            // EmailJS Integration - Active
             try {
-                // Initialize EmailJS
-                emailjs.init(EMAILJS_PUBLIC_KEY);
+                // Submit to Lovable Cloud backend
+                const response = await fetch('https://iohvelphxdyuaujllnid.supabase.co/functions/v1/submit-rsvp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fullName: fullName,
+                        attendance: attendance,
+                        guestCount: attendance === 'Geleceğim' ? parseInt(guestCount) : 1,
+                        notes: notes || null,
+                    }),
+                });
                 
-                // Send email
-                const response = await emailjs.send(
-                    EMAILJS_SERVICE_ID,
-                    EMAILJS_TEMPLATE_ID,
-                    {
-                        to_email: RECIPIENT_EMAIL,
-                        from_name: fullName,
-                        reply_to: fullName,
-                        full_name: fullName,
-                        attendance_status: attendance,
-                        guest_count: emailData.guestCount,
-                        notes: emailData.notes,
-                        message: `
-Ad Soyad: ${fullName}
-Katılım Durumu: ${attendance}
-Kişi Sayısı: ${emailData.guestCount}
-Notlar: ${emailData.notes}
-                        `.trim()
-                    }
-                );
+                const result = await response.json();
                 
-                console.log('Email sent successfully:', response);
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to submit RSVP');
+                }
+                
+                console.log('RSVP submitted successfully:', result);
                 showSuccessModal();
                 document.getElementById('lcvForm').reset();
-                
-                // Re-enable submit button
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'İleri →';
+                guestCountGroup.style.display = 'none';
             } catch (error) {
-                console.error('Email sending failed:', error);
+                console.error('RSVP submission failed:', error);
                 alert('Bir hata oluştu. Lütfen tekrar deneyiniz veya doğrudan bizimle iletişime geçin.');
-                
+            } finally {
                 // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'İleri →';
@@ -928,8 +904,5 @@ Notlar: ${emailData.notes}
             }
         });
     </script>
-    
-    <!-- EmailJS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </body>
 </html>
