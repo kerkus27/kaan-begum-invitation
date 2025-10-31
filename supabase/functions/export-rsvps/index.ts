@@ -39,18 +39,26 @@ serve(async (req) => {
 
     console.log(`Found ${rsvps?.length || 0} RSVPs`);
 
-    // Create CSV content
+    // Create CSV content with proper escaping for Turkish characters
     const headers = ['Ad Soyad', 'Katılım Durumu', 'Kişi Sayısı', 'Notlar', 'Tarih'];
     const csvRows = [headers.join(',')];
 
     if (rsvps && rsvps.length > 0) {
       for (const rsvp of rsvps) {
+        // Properly escape strings that contain commas, quotes, or Turkish characters
+        const escapeCsvField = (field: string) => {
+          // Replace any double quotes with two double quotes
+          const escaped = field.replace(/"/g, '""');
+          // Wrap in quotes
+          return `"${escaped}"`;
+        };
+
         const row = [
-          `"${rsvp.full_name}"`,
-          `"${rsvp.attendance}"`,
-          rsvp.guest_count || 'N/A',
-          `"${rsvp.notes || ''}"`,
-          `"${new Date(rsvp.created_at).toLocaleString('tr-TR')}"`,
+          escapeCsvField(rsvp.full_name),
+          escapeCsvField(rsvp.attendance),
+          rsvp.guest_count?.toString() || '1',
+          escapeCsvField(rsvp.notes || ''),
+          escapeCsvField(new Date(rsvp.created_at).toLocaleString('tr-TR')),
         ];
         csvRows.push(row.join(','));
       }
@@ -58,7 +66,7 @@ serve(async (req) => {
 
     const csvContent = csvRows.join('\n');
     
-    // Add BOM for proper Excel UTF-8 encoding
+    // Add BOM (Byte Order Mark) for proper Excel UTF-8 encoding with Turkish characters
     const bom = '\uFEFF';
     const csvWithBom = bom + csvContent;
 
