@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { LogOut, Download, CheckCircle, XCircle } from 'lucide-react';
+import { LogOut, Download, Users } from 'lucide-react';
 
 interface RSVP {
   id: string;
@@ -20,12 +20,6 @@ interface RSVP {
   attendance: string;
   guest_count: number | null;
   notes: string | null;
-  created_at: string;
-}
-
-interface PendingAdmin {
-  user_id: string;
-  email: string;
   created_at: string;
 }
 
@@ -38,7 +32,7 @@ const Admin = () => {
   const [exporting, setExporting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
-  const [pendingAdmins, setPendingAdmins] = useState<PendingAdmin[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -75,7 +69,7 @@ const Admin = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchRsvps();
-      fetchPendingAdmins();
+      fetchPendingCount();
     }
   }, [isAdmin]);
 
@@ -101,38 +95,18 @@ const Admin = () => {
     setCheckingRole(false);
   };
 
-  const fetchPendingAdmins = async () => {
-    const { data: pendingRoles, error: rolesError } = await supabase
+  const fetchPendingCount = async () => {
+    const { count, error } = await supabase
       .from('user_roles')
-      .select('user_id, created_at')
+      .select('*', { count: 'exact', head: true })
       .eq('role', 'pending_admin');
 
-    if (rolesError) {
-      console.error('Error fetching pending admins:', rolesError);
+    if (error) {
+      console.error('Error fetching pending count:', error);
       return;
     }
 
-    if (!pendingRoles || pendingRoles.length === 0) {
-      setPendingAdmins([]);
-      return;
-    }
-
-    // Fetch user emails from auth.users using RPC
-    const pending: PendingAdmin[] = [];
-    
-    for (const role of pendingRoles) {
-      const { data: email } = await supabase.rpc('get_user_email', {
-        _user_id: role.user_id
-      });
-      
-      pending.push({
-        user_id: role.user_id,
-        email: email || 'Unknown',
-        created_at: role.created_at
-      });
-    }
-
-    setPendingAdmins(pending);
+    setPendingCount(count || 0);
   };
 
   const fetchRsvps = async () => {
@@ -171,7 +145,6 @@ const Admin = () => {
 
       if (error) throw error;
 
-      // Create a blob from the CSV data
       const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -189,51 +162,6 @@ const Admin = () => {
     setExporting(false);
   };
 
-  const handleApproveAdmin = async (userId: string) => {
-    const { error: deleteError } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .eq('role', 'pending_admin');
-
-    if (deleteError) {
-      toast.error('Hata: ' + deleteError.message);
-      return;
-    }
-
-    const { error: insertError } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: userId,
-        role: 'admin',
-        approved_by: user?.id
-      });
-
-    if (insertError) {
-      toast.error('Hata: ' + insertError.message);
-      return;
-    }
-
-    toast.success('Admin onaylandı');
-    fetchPendingAdmins();
-  };
-
-  const handleRejectAdmin = async (userId: string) => {
-    const { error } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .eq('role', 'pending_admin');
-
-    if (error) {
-      toast.error('Hata: ' + error.message);
-      return;
-    }
-
-    toast.success('Admin talebi reddedildi');
-    fetchPendingAdmins();
-  };
-
   const attendingCount = rsvps.filter(r => r.attendance === 'Geleceğim').length;
   const notAttendingCount = rsvps.filter(r => r.attendance === 'Gelemeyeceğim').length;
   const totalGuests = rsvps
@@ -249,61 +177,36 @@ const Admin = () => {
   }
 
   if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-4 md:p-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-card/80 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 border border-border/50">
-            <h1 className="text-3xl font-serif text-foreground mb-4">Erişim Reddedildi</h1>
-            <p className="text-muted-foreground mb-6">
-              Bu sayfaya erişim için admin onayı gereklidir. Lütfen erkuskaan@gmail.com adresine başvurun.
-            </p>
-            <Button onClick={handleLogout} variant="outline">
-              <LogOut className="w-4 h-4 mr-2" />
-              Çıkış
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    navigate('/waiting-approval');
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {pendingAdmins.length > 0 && (
-          <div className="bg-card/80 backdrop-blur-sm rounded-lg shadow-xl p-6 border border-amber-500/50">
-            <h2 className="text-2xl font-serif text-foreground mb-4">Bekleyen Admin Onayları</h2>
-            <div className="space-y-3">
-              {pendingAdmins.map((pending) => (
-                <div key={pending.user_id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border/30">
-                  <div>
-                    <p className="font-medium text-foreground">{pending.email}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(pending.created_at).toLocaleString('tr-TR')}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleApproveAdmin(pending.user_id)}
-                      variant="outline"
-                      size="sm"
-                      className="text-green-600 hover:text-green-700"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Onayla
-                    </Button>
-                    <Button
-                      onClick={() => handleRejectAdmin(pending.user_id)}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      Reddet
-                    </Button>
-                  </div>
+        {pendingCount > 0 && (
+          <div className="bg-amber-500/10 backdrop-blur-sm rounded-lg shadow-md p-4 border border-amber-500/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
-              ))}
+                <div>
+                  <p className="font-medium text-foreground">
+                    {pendingCount} kullanıcı onay bekliyor
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Admin erişimi için onay bekleyen kullanıcılar var
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate('/pending-approvals')}
+                variant="outline"
+                className="border-amber-500/50 hover:bg-amber-500/10"
+              >
+                Onayları Görüntüle
+              </Button>
             </div>
           </div>
         )}
