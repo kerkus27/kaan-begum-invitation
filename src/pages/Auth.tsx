@@ -83,7 +83,7 @@ const Auth = () => {
 
     const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -94,7 +94,23 @@ const Auth = () => {
     if (error) {
       toast.error('Kayıt başarısız: ' + error.message);
     } else {
-      toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
+      // If user is not the primary admin, request admin approval
+      if (email !== 'erkuskaan@gmail.com' && data.user) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: 'pending_admin'
+          });
+        
+        if (roleError) {
+          console.error('Error adding pending admin role:', roleError);
+        }
+        
+        toast.success('Kayıt başarılı! Admin onayı bekleniyor.');
+      } else {
+        toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
+      }
     }
 
     setLoading(false);

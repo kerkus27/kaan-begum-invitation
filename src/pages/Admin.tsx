@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { LogOut, Download } from 'lucide-react';
+import { LogOut, Download, CheckCircle, XCircle } from 'lucide-react';
 
 interface RSVP {
   id: string;
@@ -23,6 +23,12 @@ interface RSVP {
   created_at: string;
 }
 
+interface PendingAdmin {
+  user_id: string;
+  email: string;
+  created_at: string;
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -30,6 +36,9 @@ const Admin = () => {
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [pendingAdmins, setPendingAdmins] = useState<PendingAdmin[]>([]);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -59,9 +68,72 @@ const Admin = () => {
 
   useEffect(() => {
     if (user) {
-      fetchRsvps();
+      checkAdminRole();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchRsvps();
+      fetchPendingAdmins();
+    }
+  }, [isAdmin]);
+
+  const checkAdminRole = async () => {
+    if (!user) return;
+    
+    setCheckingRole(true);
+    
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking admin role:', error);
+      setIsAdmin(false);
+    } else {
+      setIsAdmin(!!data);
+    }
+    
+    setCheckingRole(false);
+  };
+
+  const fetchPendingAdmins = async () => {
+    const { data: pendingRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('user_id, created_at')
+      .eq('role', 'pending_admin');
+
+    if (rolesError) {
+      console.error('Error fetching pending admins:', rolesError);
+      return;
+    }
+
+    if (!pendingRoles || pendingRoles.length === 0) {
+      setPendingAdmins([]);
+      return;
+    }
+
+    // Fetch user emails from auth.users using RPC
+    const pending: PendingAdmin[] = [];
+    
+    for (const role of pendingRoles) {
+      const { data: email } = await supabase.rpc('get_user_email', {
+        _user_id: role.user_id
+      });
+      
+      pending.push({
+        user_id: role.user_id,
+        email: email || 'Unknown',
+        created_at: role.created_at
+      });
+    }
+
+    setPendingAdmins(pending);
+  };
 
   const fetchRsvps = async () => {
     setLoading(true);
@@ -117,15 +189,125 @@ const Admin = () => {
     setExporting(false);
   };
 
+  const handleApproveAdmin = async (userId: string) => {
+    const { error: deleteError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role', 'pending_admin');
+
+    if (deleteError) {
+      toast.error('Hata: ' + deleteError.message);
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: userId,
+        role: 'admin',
+        approved_by: user?.id
+      });
+
+    if (insertError) {
+      toast.error('Hata: ' + insertError.message);
+      return;
+    }
+
+    toast.success('Admin onaylandı');
+    fetchPendingAdmins();
+  };
+
+  const handleRejectAdmin = async (userId: string) => {
+    const { error } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role', 'pending_admin');
+
+    if (error) {
+      toast.error('Hata: ' + error.message);
+      return;
+    }
+
+    toast.success('Admin talebi reddedildi');
+    fetchPendingAdmins();
+  };
+
   const attendingCount = rsvps.filter(r => r.attendance === 'Geleceğim').length;
   const notAttendingCount = rsvps.filter(r => r.attendance === 'Gelemeyeceğim').length;
   const totalGuests = rsvps
     .filter(r => r.attendance === 'Geleceğim')
     .reduce((sum, r) => sum + (r.guest_count || 1), 0);
 
+  if (checkingRole) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center text-muted-foreground">Yetki kontrol ediliyor...</div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-4 md:p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-card/80 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 border border-border/50">
+            <h1 className="text-3xl font-serif text-foreground mb-4">Erişim Reddedildi</h1>
+            <p className="text-muted-foreground mb-6">
+              Bu sayfaya erişim için admin onayı gereklidir. Lütfen erkuskaan@gmail.com adresine başvurun.
+            </p>
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />
+              Çıkış
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {pendingAdmins.length > 0 && (
+          <div className="bg-card/80 backdrop-blur-sm rounded-lg shadow-xl p-6 border border-amber-500/50">
+            <h2 className="text-2xl font-serif text-foreground mb-4">Bekleyen Admin Onayları</h2>
+            <div className="space-y-3">
+              {pendingAdmins.map((pending) => (
+                <div key={pending.user_id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border/30">
+                  <div>
+                    <p className="font-medium text-foreground">{pending.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(pending.created_at).toLocaleString('tr-TR')}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleApproveAdmin(pending.user_id)}
+                      variant="outline"
+                      size="sm"
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Onayla
+                    </Button>
+                    <Button
+                      onClick={() => handleRejectAdmin(pending.user_id)}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Reddet
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <div className="bg-card/80 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8 border border-border/50">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
