@@ -45,21 +45,48 @@ const Auth = () => {
   }, [navigate]);
 
   const checkRoleAndRedirect = async (userId: string) => {
-    const { data, error } = await supabase
+    // First check if user has any role
+    const { data: allRoles, error: rolesError } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+      .eq('user_id', userId);
 
-    if (error) {
-      console.error('Error checking role:', error);
+    if (rolesError) {
+      console.error('Error checking role:', rolesError);
       navigate('/waiting-approval');
-    } else if (data) {
-      navigate('/admin');
-    } else {
-      navigate('/waiting-approval');
+      return;
     }
+
+    // Check if user is admin
+    const isAdmin = allRoles?.some(r => r.role === 'admin');
+    if (isAdmin) {
+      navigate('/admin');
+      return;
+    }
+
+    // Check if user has pending_admin role
+    const isPending = allRoles?.some(r => r.role === 'pending_admin');
+    
+    // If user has no role at all, create pending_admin role
+    if (!allRoles || allRoles.length === 0) {
+      const { data: userData } = await supabase.auth.getUser();
+      
+      // Don't create pending role for primary admin
+      if (userData?.user?.email !== 'erkuskaan@gmail.com') {
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: 'pending_admin'
+          });
+        
+        if (insertError) {
+          console.error('Error creating pending_admin role:', insertError);
+        }
+      }
+    }
+
+    navigate('/waiting-approval');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
