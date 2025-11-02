@@ -122,16 +122,6 @@ const WaitingApproval = () => {
               Çıkış Yap
             </Button>
           </div>
-
-          <div className="mt-6 text-center">
-            <Button
-              variant="link"
-              onClick={() => navigate('/')}
-              className="text-sm text-muted-foreground"
-            >
-              ← Ana sayfaya dön
-            </Button>
-          </div>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { LogOut, Download, Users } from 'lucide-react';
+import { LogOut, Download, Users, Trash2 } from 'lucide-react';
 
 interface RSVP {
   id: string;
@@ -33,6 +33,7 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -162,6 +163,24 @@ const Admin = () => {
     setExporting(false);
   };
 
+  const handleDelete = async (rsvpId: string) => {
+    setDeletingId(rsvpId);
+    
+    const { error } = await supabase
+      .from('wedding_rsvps')
+      .delete()
+      .eq('id', rsvpId);
+
+    if (error) {
+      toast.error('Silme hatası: ' + error.message);
+    } else {
+      toast.success('RSVP başarıyla silindi');
+      fetchRsvps();
+    }
+    
+    setDeletingId(null);
+  };
+
   const attendingCount = rsvps.filter(r => r.attendance === 'Geleceğim').length;
   const notAttendingCount = rsvps.filter(r => r.attendance === 'Gelemeyeceğim').length;
   const totalGuests = rsvps
@@ -220,6 +239,14 @@ const Admin = () => {
             
             <div className="flex gap-2">
               <Button
+                onClick={() => navigate('/pending-approvals')}
+                variant="outline"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Bekleyen Onaylar {pendingCount > 0 && `(${pendingCount})`}
+              </Button>
+              
+              <Button
                 onClick={handleExport}
                 disabled={exporting}
                 variant="outline"
@@ -271,6 +298,7 @@ const Admin = () => {
                     <TableHead>Kişi Sayısı</TableHead>
                     <TableHead>Notlar</TableHead>
                     <TableHead>Tarih</TableHead>
+                    <TableHead className="text-right">İşlemler</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -289,6 +317,17 @@ const Admin = () => {
                       <TableCell>{rsvp.guest_count || 1}</TableCell>
                       <TableCell className="max-w-xs truncate">{rsvp.notes || '-'}</TableCell>
                       <TableCell>{new Date(rsvp.created_at).toLocaleString('tr-TR')}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          onClick={() => handleDelete(rsvp.id)}
+                          disabled={deletingId === rsvp.id}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
