@@ -4,4 +4,4 @@ project_id = "iohvelphxdyuaujllnid"
 verify_jwt = false
 
 [functions.export-rsvps]
-verify_jwt = false
+verify_jwt = true

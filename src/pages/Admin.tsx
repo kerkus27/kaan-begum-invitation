@@ -239,6 +239,14 @@ const Admin = () => {
             
             <div className="flex gap-2">
               <Button
+                onClick={() => navigate('/user-management')}
+                variant="outline"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Kullanıcı Yönetimi
+              </Button>
+
+              <Button
                 onClick={() => navigate('/pending-approvals')}
                 variant="outline"
               >
