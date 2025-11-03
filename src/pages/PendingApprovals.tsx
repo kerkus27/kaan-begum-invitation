@@ -124,7 +124,7 @@ const PendingApprovals = () => {
     setLoading(false);
   };
 
-  const handleApproveAdmin = async (userId: string) => {
+  const handleApproveAsAdmin = async (userId: string) => {
     const { error: deleteError } = await supabase
       .from('user_roles')
       .delete()
@@ -149,7 +149,36 @@ const PendingApprovals = () => {
       return;
     }
 
-    toast.success('Admin onaylandı');
+    toast.success('Admin olarak onaylandı');
+    fetchPendingAdmins();
+  };
+
+  const handleApproveAsUser = async (userId: string) => {
+    const { error: deleteError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role', 'pending_admin');
+
+    if (deleteError) {
+      toast.error('Hata: ' + deleteError.message);
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: userId,
+        role: 'user',
+        approved_by: user?.id
+      });
+
+    if (insertError) {
+      toast.error('Hata: ' + insertError.message);
+      return;
+    }
+
+    toast.success('Kullanıcı olarak onaylandı (sadece export)');
     fetchPendingAdmins();
   };
 
@@ -215,13 +244,22 @@ const PendingApprovals = () => {
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
                           <Button
-                            onClick={() => handleApproveAdmin(pending.user_id)}
+                            onClick={() => handleApproveAsAdmin(pending.user_id)}
                             variant="outline"
                             size="sm"
                             className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
-                            Onayla
+                            Admin
+                          </Button>
+                          <Button
+                            onClick={() => handleApproveAsUser(pending.user_id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Kullanıcı
                           </Button>
                           <Button
                             onClick={() => handleRejectAdmin(pending.user_id)}

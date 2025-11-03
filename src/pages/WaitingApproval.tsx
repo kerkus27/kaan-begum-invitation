@@ -45,14 +45,18 @@ const WaitingApproval = () => {
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .eq('role', 'admin')
       .maybeSingle();
 
     if (error) {
       console.error('Error checking approval status:', error);
     } else if (data) {
-      toast.success('Admin erişimi onaylandı!');
-      navigate('/admin');
+      if (data.role === 'admin') {
+        toast.success('Admin erişimi onaylandı!');
+        navigate('/admin');
+      } else if (data.role === 'user') {
+        toast.success('Erişim onaylandı!');
+        navigate('/export');
+      }
     }
     
     setChecking(false);
