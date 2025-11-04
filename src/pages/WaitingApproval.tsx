@@ -53,7 +53,7 @@ const WaitingApproval = () => {
       if (data.role === 'admin') {
         toast.success('Admin erişimi onaylandı!');
         navigate('/admin');
-      } else if ((data.role as any) === 'user') {
+      } else if (data.role === 'user') {
         toast.success('Erişim onaylandı!');
         navigate('/export');
       }

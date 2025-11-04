@@ -167,11 +167,11 @@ const PendingApprovals = () => {
 
     const { error: insertError } = await supabase
       .from('user_roles')
-      .insert([{
+      .insert({
         user_id: userId,
-        role: 'user' as any,
+        role: 'user',
         approved_by: user?.id
-      }]);
+      });
 
     if (insertError) {
       toast.error('Hata: ' + insertError.message);
