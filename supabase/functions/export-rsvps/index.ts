@@ -47,18 +47,18 @@ serve(async (req) => {
       );
     }
 
-    // Check if user has admin role
+    // Check if user has admin or user role
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'user'])
       .maybeSingle();
 
     if (roleError || !roleData) {
       console.error('Role check error:', roleError);
       return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
+        JSON.stringify({ error: 'Forbidden: Access denied' }),
         {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -66,7 +66,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Admin user ${user.email} exporting RSVPs`);
+    console.log(`User ${user.email} (role: ${roleData.role}) exporting RSVPs`);
 
     // Fetch all RSVPs
     const { data: rsvps, error } = await supabase
