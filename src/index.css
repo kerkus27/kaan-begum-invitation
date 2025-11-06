@@ -8,35 +8,35 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 44 33% 98%; /* cream paper */
-    --foreground: 23 12% 22%; /* dark ink */
+    --background: 44 33% 98%; /* paper #fbfaf6 */
+    --foreground: 23 12% 22%; /* ink #3a342f */
 
-    --card: 40 25% 96%; /* ivory */
+    --card: 0 0% 100%; /* white cards */
     --card-foreground: 23 12% 22%;
 
-    --popover: 40 25% 96%;
+    --popover: 0 0% 100%;
     --popover-foreground: 23 12% 22%;
 
-    --primary: 115 10% 47%; /* sage green */
+    --primary: 115 10% 47%; /* sage #6b7e6a */
     --primary-foreground: 44 33% 98%;
 
-    --secondary: 40 25% 96%;
+    --secondary: 40 25% 90%;
     --secondary-foreground: 23 12% 22%;
 
-    --muted: 40 25% 96%;
-    --muted-foreground: 25 6% 47%; /* muted text */
+    --muted: 40 25% 93%;
+    --muted-foreground: 25 6% 47%; /* muted #7d746d */
 
-    --accent: 115 10% 47%;
-    --accent-foreground: 44 33% 98%;
+    --accent: 40 34% 59%; /* gold #b8a378 */
+    --accent-foreground: 23 12% 22%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 115 15% 66%; /* rule color */
-    --input: 115 15% 66%;
+    --border: 115 10% 85%;
+    --input: 115 10% 85%;
     --ring: 115 10% 47%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
