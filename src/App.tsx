@@ -12,6 +12,12 @@ import WaitingApproval from "./pages/WaitingApproval";
 import UserManagement from "./pages/UserManagement";
 import Export from "./pages/Export";
 import NotFound from "./pages/NotFound";
+import HazirDavetiye from "./pages/HazirDavetiye";
+import OzelTasarim from "./pages/OzelTasarim";
+import Iletisim from "./pages/Iletisim";
+import KullanimKosullari from "./pages/KullanimKosullari";
+import Gizlilik from "./pages/Gizlilik";
+import Hakkimizda from "./pages/Hakkimizda";
 
 // Component to handle wedding invitation routes
 const WeddingInvitation = () => {
@@ -38,7 +44,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/kaan-begum" element={<WeddingInvitation />} />
+          <Route path="/begum-kaan" element={<WeddingInvitation />} />
+          <Route path="/hazirdavetiye" element={<HazirDavetiye />} />
+          <Route path="/ozeltasarim" element={<OzelTasarim />} />
+          <Route path="/iletisim" element={<Iletisim />} />
+          <Route path="/kullanimkosullari" element={<KullanimKosullari />} />
+          <Route path="/gizlilik" element={<Gizlilik />} />
+          <Route path="/hakkimizda" element={<Hakkimizda />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/pending-approvals" element={<PendingApprovals />} />
