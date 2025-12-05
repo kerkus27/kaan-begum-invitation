@@ -43,7 +43,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Navigate to="/begum-kaan" replace />} />
           <Route path="/begum-kaan" element={<WeddingInvitation />} />
           <Route path="/hazirdavetiye" element={<HazirDavetiye />} />
           <Route path="/ozeltasarim" element={<OzelTasarim />} />

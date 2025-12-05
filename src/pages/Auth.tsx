@@ -221,10 +221,10 @@ const Auth = () => {
           <div className="mt-6 text-center">
             <Button
               variant="link"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/begum-kaan')}
               className="text-sm text-muted-foreground"
             >
-              ← Ana sayfaya dön
+              ← Davetiyeye dön
             </Button>
           </div>
         </div>
