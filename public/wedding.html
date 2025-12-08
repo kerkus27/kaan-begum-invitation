@@ -490,6 +490,140 @@
             margin-bottom: 30px;
         }
         
+        /* Calendar Bottom Sheet */
+        .bottom-sheet-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(58, 52, 47, 0.6);
+            z-index: 1000;
+        }
+        
+        .bottom-sheet-overlay.active {
+            display: block;
+        }
+        
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--paper);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 20px 40px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+        
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--rule);
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+        
+        .bottom-sheet-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--ink);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .calendar-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            border: 1px solid var(--rule);
+            border-radius: 12px;
+            background: var(--ivory);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .calendar-option:hover {
+            border-color: var(--sage);
+            background: var(--paper);
+        }
+        
+        .calendar-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .calendar-icon.google {
+            background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);
+        }
+        
+        .calendar-icon.apple {
+            background: linear-gradient(135deg, #ff2d55, #ff375f);
+        }
+        
+        .calendar-icon.outlook {
+            background: linear-gradient(135deg, #0078d4, #28a8ea);
+        }
+        
+        .calendar-icon.ics {
+            background: var(--sage);
+        }
+        
+        .calendar-option-text {
+            flex: 1;
+        }
+        
+        .calendar-option-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 2px;
+        }
+        
+        .calendar-option-desc {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        
+        .bottom-sheet-cancel {
+            width: 100%;
+            margin-top: 15px;
+            padding: 14px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-family: 'Fraunces', serif;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .bottom-sheet-cancel:hover {
+            color: var(--ink);
+        }
+        
         /* Footer */
         .footer {
             text-align: center;
@@ -592,7 +726,45 @@
                 <span class="countdown-number" id="seconds">0</span>
                 <span class="countdown-label">Saniye</span>
             </div>
+    </div>
+    
+    <!-- Calendar Bottom Sheet -->
+    <div class="bottom-sheet-overlay" id="calendarOverlay"></div>
+    <div class="bottom-sheet" id="calendarSheet">
+        <div class="bottom-sheet-handle"></div>
+        <h3 class="bottom-sheet-title">Takvime Ekle</h3>
+        <div class="calendar-options">
+            <a href="#" class="calendar-option" id="googleCalendarOption">
+                <div class="calendar-icon google">📅</div>
+                <div class="calendar-option-text">
+                    <div class="calendar-option-title">Google Takvim</div>
+                    <div class="calendar-option-desc">Web tarayıcısında açılır</div>
+                </div>
+            </a>
+            <a href="#" class="calendar-option" id="appleCalendarOption">
+                <div class="calendar-icon apple">🍎</div>
+                <div class="calendar-option-text">
+                    <div class="calendar-option-title">Apple Takvim</div>
+                    <div class="calendar-option-desc">iPhone ve Mac için</div>
+                </div>
+            </a>
+            <a href="#" class="calendar-option" id="outlookCalendarOption">
+                <div class="calendar-icon outlook">📧</div>
+                <div class="calendar-option-text">
+                    <div class="calendar-option-title">Outlook Takvim</div>
+                    <div class="calendar-option-desc">Microsoft Outlook için</div>
+                </div>
+            </a>
+            <a href="#" class="calendar-option" id="icsDownloadOption">
+                <div class="calendar-icon ics">⬇️</div>
+                <div class="calendar-option-text">
+                    <div class="calendar-option-title">Takvim Dosyası İndir</div>
+                    <div class="calendar-option-desc">Tüm takvim uygulamaları için (.ics)</div>
+                </div>
+            </a>
         </div>
+        <button class="bottom-sheet-cancel" onclick="closeCalendarSheet()">İptal</button>
+    </div>
         
         <p class="invitation-text">BU ÖZEL GÜNÜMÜZE DAVETLİSİNİZ</p>
         
@@ -791,19 +963,122 @@
         }
         initMap();
         
-        // Add to Calendar
+        // Add to Calendar - Show bottom sheet
+        const eventData = {
+            title: 'Kaan & Begüm Düğün',
+            location: 'Sponsa Garden, Bozhane, Kapadokya Cd., Beykoz/İstanbul',
+            description: 'Ailemiz ve dostlarımızla bu özel günde buluşuyoruz.',
+            startDate: '2026-05-16',
+            startTime: '19:00',
+            endDate: '2026-05-16',
+            endTime: '23:59',
+            start: '20260516T190000',
+            end: '20260516T235900'
+        };
+        
+        // Generate calendar URLs
+        function getGoogleCalendarUrl() {
+            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventData.title)}&dates=${eventData.start}/${eventData.end}&details=${encodeURIComponent(eventData.description)}&location=${encodeURIComponent(eventData.location)}&sf=true&output=xml`;
+        }
+        
+        function getOutlookCalendarUrl() {
+            const startISO = '2026-05-16T19:00:00';
+            const endISO = '2026-05-16T23:59:00';
+            return `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(eventData.title)}&body=${encodeURIComponent(eventData.description)}&startdt=${startISO}&enddt=${endISO}&location=${encodeURIComponent(eventData.location)}&path=/calendar/action/compose`;
+        }
+        
+        function generateICSContent() {
+            const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Kaan & Begüm Wedding//TR
+BEGIN:VEVENT
+DTSTART:${eventData.start}
+DTEND:${eventData.end}
+SUMMARY:${eventData.title}
+DESCRIPTION:${eventData.description}
+LOCATION:${eventData.location}
+END:VEVENT
+END:VCALENDAR`;
+            return icsContent;
+        }
+        
+        function downloadICS() {
+            const icsContent = generateICSContent();
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'kaan-begum-dugun.ics';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Detect platform
+        function isAppleDevice() {
+            return /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) && !window.MSStream;
+        }
+        
+        function isAndroid() {
+            return /Android/.test(navigator.userAgent);
+        }
+        
+        // Show/hide calendar sheet
+        function showCalendarSheet() {
+            document.getElementById('calendarOverlay').classList.add('active');
+            document.getElementById('calendarSheet').classList.add('active');
+        }
+        
+        function closeCalendarSheet() {
+            document.getElementById('calendarOverlay').classList.remove('active');
+            document.getElementById('calendarSheet').classList.remove('active');
+        }
+        
+        // Main button click handler
         document.getElementById('addToCalendar').addEventListener('click', function() {
-            const event = {
-                title: 'Kaan & Begüm Düğün',
-                location: 'Sponsa Garden, Bozhane, Kapadokya Cd., Beykoz/İstanbul',
-                description: 'Ailemiz ve dostlarımızla bu özel günde buluşuyoruz.',
-                start: '20260516T190000',
-                end: '20260516T235900'
-            };
+            // On Android, directly open Google Calendar (most common)
+            // On Apple devices, show sheet but prioritize Apple option
+            // On desktop, always show the sheet
             
-            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${event.start}/${event.end}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&sf=true&output=xml`;
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             
-            window.open(googleCalendarUrl, '_blank');
+            if (isMobile) {
+                // On mobile, show the bottom sheet for choice
+                showCalendarSheet();
+            } else {
+                // On desktop, show the sheet for all options
+                showCalendarSheet();
+            }
+        });
+        
+        // Close sheet when clicking overlay
+        document.getElementById('calendarOverlay').addEventListener('click', closeCalendarSheet);
+        
+        // Calendar option handlers
+        document.getElementById('googleCalendarOption').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.open(getGoogleCalendarUrl(), '_blank');
+            closeCalendarSheet();
+        });
+        
+        document.getElementById('appleCalendarOption').addEventListener('click', function(e) {
+            e.preventDefault();
+            // For Apple Calendar, we download an ICS file which iOS will handle
+            downloadICS();
+            closeCalendarSheet();
+        });
+        
+        document.getElementById('outlookCalendarOption').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.open(getOutlookCalendarUrl(), '_blank');
+            closeCalendarSheet();
+        });
+        
+        document.getElementById('icsDownloadOption').addEventListener('click', function(e) {
+            e.preventDefault();
+            downloadICS();
+            closeCalendarSheet();
         });
         
         // Form Handling
