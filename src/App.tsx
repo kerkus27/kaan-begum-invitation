@@ -22,7 +22,8 @@ import Hakkimizda from "./pages/Hakkimizda";
 // Component to handle wedding invitation routes
 const WeddingInvitation = () => {
   useEffect(() => {
-    window.location.href = "/wedding.html";
+    const basePath = import.meta.env.BASE_URL || "/";
+    window.location.href = `${basePath}wedding.html`;
   }, []);
   
   return (
