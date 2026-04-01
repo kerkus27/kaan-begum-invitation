@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -17,43 +16,52 @@ serve(async (req) => {
     
     const { fullName, attendance, guestCount, notes } = await req.json();
 
-    // Validate required fields
     if (!fullName || !attendance) {
-      console.error('Missing required fields:', { fullName, attendance });
       return new Response(
         JSON.stringify({ error: 'Full name and attendance are required' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate attendance value
+    // Input length validation
+    const trimmedName = String(fullName).trim();
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Name must be 2-100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (notes && String(notes).length > 500) {
+      return new Response(
+        JSON.stringify({ error: 'Notes too long (max 500 characters)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!['Geleceğim', 'Gelemeyeceğim'].includes(attendance)) {
-      console.error('Invalid attendance value:', attendance);
       return new Response(
         JSON.stringify({ error: 'Invalid attendance value' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create Supabase client
+    // Validate and clamp guest count
+    const validGuestCount = attendance === 'Geleceğim'
+      ? Math.min(Math.max(parseInt(guestCount) || 1, 1), 20)
+      : null;
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Insert RSVP into database
     const { data, error } = await supabase
       .from('wedding_rsvps')
       .insert({
-        full_name: fullName,
+        full_name: trimmedName,
         attendance: attendance,
-        guest_count: attendance === 'Geleceğim' ? (guestCount || 1) : null,
-        notes: notes || null,
+        guest_count: validGuestCount,
+        notes: notes ? String(notes).slice(0, 500) : null,
       })
       .select()
       .single();
@@ -62,35 +70,21 @@ serve(async (req) => {
       console.error('Database error:', error);
       return new Response(
         JSON.stringify({ error: 'Failed to save RSVP' }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('RSVP saved successfully:', data);
+    console.log('RSVP saved successfully');
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'RSVP submitted successfully',
-        data 
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ success: true, message: 'RSVP submitted successfully' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in submit-rsvp function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: 'An error occurred. Please try again.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
