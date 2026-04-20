@@ -855,7 +855,7 @@
                     body: JSON.stringify({
                         fullName: fullName,
                         attendance: attendance,
-                        guestCount: attendance === 'Geleceğim' ? parseInt(guestCount) : 1,
+                        guestCount: attendance === 'Geleceğim' ? 1 : null,
                         notes: notes || null,
                     }),
                 });
@@ -869,7 +869,6 @@
                 console.log('RSVP submitted successfully:', result);
                 showSuccessModal();
                 document.getElementById('lcvForm').reset();
-                guestCountGroup.style.display = 'none';
             } catch (error) {
                 console.error('RSVP submission failed:', error);
                 alert('Bir hata oluştu. Lütfen tekrar deneyiniz veya doğrudan bizimle iletişime geçin.');
