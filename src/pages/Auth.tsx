@@ -113,6 +113,23 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Lütfen önce email adresinizi giriniz');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error('Sıfırlama emaili gönderilemedi: ' + error.message);
+    } else {
+      toast.success('Şifre sıfırlama bağlantısı email adresinize gönderildi');
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -218,7 +235,19 @@ const Auth = () => {
             </div>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
+            <Button
+              variant="link"
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={loading}
+              className="text-sm"
+            >
+              Şifremi unuttum
+            </Button>
+          </div>
+
+          <div className="mt-2 text-center">
             <Button
               variant="link"
               onClick={() => navigate('/begum-kaan')}
