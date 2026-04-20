@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import PendingApprovals from "./pages/PendingApprovals";
 import WaitingApproval from "./pages/WaitingApproval";
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/gizlilik" element={<Gizlilik />} />
           <Route path="/hakkimizda" element={<Hakkimizda />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/pending-approvals" element={<PendingApprovals />} />
           <Route path="/user-management" element={<UserManagement />} />
